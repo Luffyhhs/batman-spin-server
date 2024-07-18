@@ -1,0 +1,31 @@
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const { errorHandler, notFound } = require("./middlewares/ErrorMiddlewares");
+const AdsRouter = require("./routes/adsRoute");
+const RewardsRouter = require("./routes/rewardsRoute");
+const WheelRouter = require("./routes/wheelRoute");
+const UserRouter = require("./routes/userRoute");
+const LuckyRouter = require("./routes/luckyRoute");
+const UiThingRouter = require("./routes/uiThingsRoute");
+
+app.use(cors());
+app.use(express.json()); // Parses JSON bodies
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+app.use((req, res, next) => {
+  //   console.log(req.headers);
+  next();
+});
+app.use("/user", UserRouter);
+app.use("/reward", RewardsRouter);
+app.use("/ads", AdsRouter);
+app.use("/wheel", WheelRouter);
+app.use("/lucky", LuckyRouter);
+app.use("/uiThing", UiThingRouter);
+
+app.use(errorHandler);
+app.use(notFound);
+module.exports = app;
