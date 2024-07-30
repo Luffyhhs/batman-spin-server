@@ -267,6 +267,8 @@ exports.getDownLineUser = expressAsyncHandler(async (req, res, next) => {
 
 exports.getSpinTime = expressAsyncHandler(async (req, res, next) => {
   try {
+    console.log(req.user);
+    // console.log(req);
     const agentLimit = await LimitModel.findOne({ agent: req.user.upLine });
 
     let spinTime = Math.floor(req.user.deposits / agentLimit.limit);

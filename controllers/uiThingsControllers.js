@@ -70,3 +70,13 @@ exports.getTop10 = expressAsyncHandler(async (req, res, next) => {
     throw new Error(error);
   }
 });
+exports.getMoreWinners = expressAsyncHandler(async (req, res, next) => {
+  try {
+    const moreWinners = await UiThingsModel.findOne({
+      settingName: "MoreWinners",
+    });
+    responseMethod({ status: "succeed", data: moreWinners }, res);
+  } catch (error) {
+    throw new Error(error);
+  }
+});

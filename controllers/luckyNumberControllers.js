@@ -192,6 +192,12 @@ const updateLucky = expressAsyncHandler(async (req, res, next) => {
       }
       if (updatedLucky?.user !== undefined && updatedLucky.status === "out") {
         const luckyUser = await User.findById(updatedLucky.user);
+        const upLineLimit = await LimitModel.findOne({
+          agent: luckyUser.upLine,
+        });
+        await User.findByIdAndUpdate(luckyUser._id, {
+          $inc: { deposits: -upLineLimit.limit },
+        });
         await ReportModel.create({
           lucky: updatedLucky._id,
           user: updatedLucky.user,
