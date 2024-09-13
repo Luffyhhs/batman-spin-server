@@ -25,7 +25,7 @@ const s3 = new S3({
     accessKeyId: process.env.DO_SPACE_ACCESS_KEY_ID,
     secretAccessKey: process.env.DO_SPACE_SECRET_ACCESS_KEY,
   },
-
+  region: process.env.DO_SPACE_REGION,
   endpoint: process.env.DO_SPACE_REG_ENDPOINT,
 });
 let uploadTemp = upload.single("img");

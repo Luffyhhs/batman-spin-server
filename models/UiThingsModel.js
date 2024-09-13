@@ -9,11 +9,23 @@ var uiThingsSchema = new mongoose.Schema(
       unique: true,
     },
     topName: {
-      type: String,
+      name: {
+        type: String,
+      },
+      prize: {
+        type: String,
+      },
     },
-    moreNames: {
-      type: Array,
-    },
+    moreNames: [
+      {
+        name: {
+          type: String,
+        },
+        prize: {
+          type: String,
+        },
+      },
+    ],
     text: {
       type: String,
     },

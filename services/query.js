@@ -13,8 +13,8 @@ exports.getMethod = async (model, queryStr, req) => {
 
   try {
     // do query modify and return
-    const query = await queryModification(model, queryStr, req);
-    return await query;
+    const query = queryModification(model, queryStr, req);
+    return query;
   } catch (error) {
     throw new Error(error);
   }
@@ -51,6 +51,7 @@ exports.postCreateMethod = async (model, body) => {
     const newData = await model.create({
       ...body,
     });
+    // console.log(newData);
     return newData;
   } catch (error) {
     throw new Error(error);
@@ -84,7 +85,7 @@ exports.deleteMethod = async (model, id) => {
 };
 
 exports.randomDeleteLuckyWithStatus = async (model, qty, reward) => {
-  console.log(qty, "delete qty");
+  // console.log(qty, "delete qty");
   let cur = 0;
   const availableCodes = await model.find(
     { reward: reward },
@@ -100,7 +101,7 @@ exports.randomDeleteLuckyWithStatus = async (model, qty, reward) => {
 
       await model.findByIdAndDelete(random._id);
       cur++;
-      console.log(cur);
+      // console.log(cur);
     }
   } catch (error) {
     throw new Error(error);

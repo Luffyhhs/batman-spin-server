@@ -5,6 +5,7 @@ const {
   randomDeleteLuckyWithStatus,
   getMethod,
   putMethod,
+  postCreateMethod,
 } = require("../services/query");
 const User = require("../models/User");
 const LimitModel = require("../models/LimitModel");
@@ -12,6 +13,7 @@ const { responseMethod } = require("../utils/response");
 const RewardModel = require("../models/RewardModel");
 const ReportModel = require("../models/ReportModel");
 const WheelModel = require("../models/WheelModel");
+const { queryModification } = require("../utils/queryModification");
 
 // Generate Random String
 async function generateRandomString() {
@@ -47,10 +49,30 @@ async function checkCodeAvailability(string) {
 const getAllLucky = expressAsyncHandler(async (req, res, next) => {
   try {
     const queryStr = { ...req.query };
-    const luckies = await getMethod(Lucky, queryStr, req);
-    const totalCount = await Lucky.countDocuments();
-    responseMethod({ status: "succeed", data: { luckies, totalCount } }, res);
+
+    const query = queryModification(Lucky, queryStr, req);
+
+    // Check if the query object has the populate method
+    if (typeof query.populate !== "function") {
+      throw new Error("Returned query object does not have a populate method");
+    }
+    let totalCount = await Lucky.countDocuments();
+    if (req.query?.code || req.query?.status || req.query?.reward) {
+      totalCount = await Lucky.countDocuments(query);
+    }
+    // Use populate with explicit path and model options
+    const luckies = await query
+      .populate({ path: "reward", model: "Reward" })
+      .populate({ path: "user", model: "User" })
+      .populate({ path: "presetAgent", model: "User" })
+      .lean(); // Convert to plain JavaScript objects
+
+    responseMethod(
+      { status: "succeed", data: { data: luckies, totalCount } },
+      res
+    );
   } catch (error) {
+    console.log("getError", error.stack);
     throw new Error(error);
   }
 });
@@ -92,36 +114,54 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
         const allAvailableNumbers = await Lucky.find({
           status: { $in: ["available"] },
         });
-        const randomIndex = Math.floor(
-          Math.random() * allAvailableNumbers.length
-        );
-        const randomLucky = allAvailableNumbers[randomIndex];
-        updatedLucky = await Lucky.findByIdAndUpdate(
-          randomLucky._id,
-          {
-            user: req.user.id,
-            status: "requested",
-          },
-          { new: true }
-        );
+        if (allAvailableNumbers.length === 0) {
+          updatedLucky === null;
+        } else {
+          const randomIndex = Math.floor(
+            Math.random() * allAvailableNumbers.length
+          );
+          const randomLucky = allAvailableNumbers[randomIndex];
+          updatedLucky = await Lucky.findByIdAndUpdate(
+            randomLucky._id,
+            {
+              user: req.user.id,
+              status: "requested",
+            },
+            { new: true }
+          );
+        }
       }
     } else {
       updatedLucky = givenLucky;
     }
 
-    console.log(updatedLucky, "line 110");
-    const index = allRewards.findIndex(
-      (reward) => reward._id.toString() === updatedLucky.reward.toString()
-    );
-    console.log(Math.floor(18000 - ((index + 1) * 360) / wheel.slices), wheel);
-    responseMethod(
-      {
-        status: "Succeed",
-        updatedLucky,
-        deg: Math.floor(18000 - ((index + 1) * 360) / wheel.slices),
-      },
-      res
-    );
+    // console.log(updatedLucky, "line 110");
+    if (updatedLucky) {
+      const index = allRewards.findIndex(
+        (reward) => reward._id.toString() === updatedLucky.reward.toString()
+      );
+      // console.log(
+      //   Math.floor(18000 - ((index + 1) * 360) / wheel.slices),
+      //   wheel
+      // );
+      responseMethod(
+        {
+          status: "Succeed",
+          updatedLucky,
+          deg: Math.floor(18000 - ((index + 1) * 360) / wheel.slices),
+        },
+        res
+      );
+    } else {
+      responseMethod(
+        {
+          status: "failed",
+          updatedLucky: null,
+          message: "There is no luckyNumber available.",
+        },
+        res
+      );
+    }
   } catch (e) {
     console.log(e);
     throw new Error(e);
@@ -129,7 +169,7 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
 });
 
 // generate luckyNumber depending on the quantity of Reward is created
-const generateLucky = expressAsyncHandler(async (qty, id) => {
+const generateLucky = async (qty, id) => {
   //   console.log(qty, id);
   try {
     let randomString = "";
@@ -151,20 +191,22 @@ const generateLucky = expressAsyncHandler(async (qty, id) => {
       }
     }
 
-    Promise.all(
+    const luckyArray = Promise.all(
       generatedStrings.map(async (string) => {
         const obj = {
           code: string,
           reward: id,
         };
-        const newLucky = await Lucky.create({ ...obj });
+        const newLucky = await postCreateMethod(Lucky, obj);
       })
     );
-    return "success";
+    if ((await luckyArray).length == qty) return await luckyArray;
+    else return "failed";
   } catch (error) {
+    console.log(error);
     throw new Error("An error occurred in generating lucky Number");
   }
-});
+};
 
 const updateLucky = expressAsyncHandler(async (req, res, next) => {
   const exist = await Lucky.findById(req.params.id);
@@ -177,6 +219,7 @@ const updateLucky = expressAsyncHandler(async (req, res, next) => {
     }
     try {
       const updatedLucky = await putMethod(req.params.id, body, Lucky);
+      // logic for updating quantity of reward
       if (updatedLucky.status === "preset") {
         await RewardModel.findByIdAndUpdate(updatedLucky.reward, {
           $inc: { quantity: -1, presetQuantity: 1 },
@@ -185,9 +228,16 @@ const updateLucky = expressAsyncHandler(async (req, res, next) => {
         await RewardModel.findByIdAndUpdate(updatedLucky.reward, {
           $inc: { presetQuantity: -1 },
         });
-      } else {
+      } else if (updatedLucky.status === "out") {
         await RewardModel.findByIdAndUpdate(updatedLucky.reward, {
           $inc: { quantity: -1 },
+        });
+      } else if (
+        updatedLucky.status === "available" &&
+        exist.status === "preset"
+      ) {
+        await RewardModel.findByIdAndUpdate(updatedLucky.reward, {
+          $inc: { quantity: 1, presetQuantity: -1 },
         });
       }
       if (updatedLucky?.user !== undefined && updatedLucky.status === "out") {
@@ -199,18 +249,27 @@ const updateLucky = expressAsyncHandler(async (req, res, next) => {
           $inc: { deposits: -upLineLimit.limit },
         });
         await ReportModel.create({
+          reward: updatedLucky.reward,
           lucky: updatedLucky._id,
           user: updatedLucky.user,
           agent: luckyUser.upLine,
         });
       }
-      res.send(updatedLucky);
-      res.status(204);
+      responseMethod(
+        {
+          status: "succeed",
+          message: "Lucky updated successfully.",
+        },
+        res
+      );
+      // res.send(updatedLucky);
+      // res.status(204);
     } catch (error) {
       throw new Error(error);
     }
+  } else {
+    throw new Error("The Id you entered is invalid (or) already out.");
   }
-  throw new Error("The Id you entered is invalid (or) already out.");
 });
 
 const deleteLucky = async (reward) => {
@@ -236,7 +295,7 @@ const modifyLuckyByRewardQuantity = async (reward, newQuantity) => {
     });
 
     if (availableCodes.length < newQuantity) {
-      generateLucky(newQuantity - availableCodes.length, reward);
+      await generateLucky(newQuantity - availableCodes.length, reward);
     } else {
       randomDeleteLuckyWithStatus(
         Lucky,

@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    playTime: {
+      type: String,
+      default: 0,
+    },
     upLine: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

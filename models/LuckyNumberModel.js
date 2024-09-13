@@ -1,7 +1,7 @@
 const mongoose = require("mongoose"); // Erase if already required
 
 // Declare the Schema of the Mongo model
-var luckyNumSchema = new mongoose.Schema(
+const luckyNumSchema = new mongoose.Schema(
   {
     code: {
       type: String,

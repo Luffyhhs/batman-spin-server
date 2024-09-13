@@ -3,7 +3,7 @@ const { responseMethod } = require("./response");
 
 exports.checkExist = async (model, data, res) => {
   const exist = await model.findOne(data);
-  console.log(exist);
+  // console.log(exist);
   if (exist) {
     return exist;
   } else {

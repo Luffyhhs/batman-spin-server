@@ -11,15 +11,15 @@ const { responseMethod } = require("../utils/response");
 exports.modifyAds = expressAsyncHandler(async (req, res) => {
   const exist = await Ads.findOne({ name: req.body.name });
   try {
-    console.log(req.uploadedFile);
+    // console.log(req.uploadedFile);
     if (exist) {
-      console.log(exist);
+      // console.log(exist);
       const updatedBody = {
         name: req.body.name,
         url: req.uploadedFile.Location,
       };
       const updatedAds = await postModifyMethod(Ads, updatedBody, exist);
-      console.log(updatedAds, "updatedAds");
+      // console.log(updatedAds, "updatedAds");
       responseMethod(
         {
           status: "succeed",
@@ -66,7 +66,14 @@ exports.getAds = expressAsyncHandler(async (req, res) => {
 exports.deleteAds = expressAsyncHandler(async (req, res) => {
   try {
     await deleteMethod(Ads, req.params.id);
-    res.status(200);
+    responseMethod(
+      {
+        status: "succeed",
+        message: "Ads Delete Successfully",
+      },
+      res
+    );
+    // res.status(200);
   } catch (error) {
     throw new Error(error);
   }

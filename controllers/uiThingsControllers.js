@@ -8,6 +8,7 @@ const {
 const { responseMethod } = require("../utils/response");
 
 exports.modifyUiThings = expressAsyncHandler(async (req, res, next) => {
+  console.log(req.body);
   try {
     const exist = await UiThingsModel.findOne({
       settingName: req.body.settingName,
@@ -73,8 +74,12 @@ exports.getTop10 = expressAsyncHandler(async (req, res, next) => {
 exports.getMoreWinners = expressAsyncHandler(async (req, res, next) => {
   try {
     const moreWinners = await UiThingsModel.findOne({
-      settingName: "MoreWinners",
+      settingName: "More Winner",
     });
+    console.log(moreWinners);
+    if (!moreWinners) {
+      throw new Error("MoreWinners not found");
+    }
     responseMethod({ status: "succeed", data: moreWinners }, res);
   } catch (error) {
     throw new Error(error);
