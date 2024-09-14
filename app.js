@@ -10,6 +10,7 @@ const UserRouter = require("./routes/userRoute");
 const LuckyRouter = require("./routes/luckyRoute");
 const UiThingRouter = require("./routes/uiThingsRoute");
 const ReportRouter = require("./routes/reportRoute");
+const LotteryRouter = require("./routes/lotteryRoute");
 
 app.use(cors());
 app.use(express.json()); // Parses JSON bodies
@@ -25,6 +26,7 @@ app.use("/reward", RewardsRouter);
 app.use("/ads", AdsRouter);
 app.use("/wheel", WheelRouter);
 app.use("/lucky", LuckyRouter);
+app.use("/lottery", LotteryRouter);
 app.use("/uiThing", UiThingRouter);
 app.use("/report", ReportRouter);
 

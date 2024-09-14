@@ -33,16 +33,34 @@ exports.signUp = expressAsyncHandler(async (req, res, next) => {
 
 exports.getUsers = expressAsyncHandler(async (req, res, next) => {
   try {
-    const queryStr = req.query;
-    const users = await getMethod(User, queryStr, req);
+    const queryStr = { ...req.query };
+    if (req.user.role === "Agent") {
+      queryStr.upLine = req.user.id;
+    }
+    const query = getMethod(User, queryStr, req);
+    // console.log(query);
+    // const
+    let users = [];
+    let totalCount = 0;
+    // console.log(req.user);
+    if (req.user.role === "Admin") {
+      totalCount = await User.countDocuments(query);
+      console.log(totalCount);
+      users = await query;
+    } else {
+      users = await query;
+      totalCount = users.length;
+    }
     responseMethod(
       {
         status: "succeed",
         data: users,
+        totalCount,
       },
       res
     );
   } catch (error) {
+    console.log(error.stack);
     throw new Error(error);
   }
 });

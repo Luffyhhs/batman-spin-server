@@ -17,7 +17,7 @@ const router = express.Router();
 router
   .route("/")
   .post(signUp)
-  .get(getUsers)
+  .get(protect, getUsers)
   .put(protect, restrictTo("Admin", "Agent"), updateUser)
   .patch(protect, restrictTo("Admin"), updateUnitsFromAdmin);
 

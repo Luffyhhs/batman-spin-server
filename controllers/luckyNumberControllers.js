@@ -49,24 +49,34 @@ async function checkCodeAvailability(string) {
 const getAllLucky = expressAsyncHandler(async (req, res, next) => {
   try {
     const queryStr = { ...req.query };
-
+    // console.log(req.query?.reward);
+    console.log(queryStr);
     const query = queryModification(Lucky, queryStr, req);
 
     // Check if the query object has the populate method
     if (typeof query.populate !== "function") {
       throw new Error("Returned query object does not have a populate method");
     }
+    const rewardPopulateOptions = { path: "reward", model: "Reward" };
+    // const userPopulateOptions = { path: "user", model: "User" };
     let totalCount = await Lucky.countDocuments();
+    console.log(totalCount);
     if (req.query?.code || req.query?.status || req.query?.reward) {
-      totalCount = await Lucky.countDocuments(query);
+      const { page, limit, ...rest } = req.query;
+      totalCount = await Lucky.countDocuments(rest);
+      if (req.query?.reward) {
+        rewardPopulateOptions.match = { _id: req.query.reward };
+      }
     }
     // Use populate with explicit path and model options
     const luckies = await query
-      .populate({ path: "reward", model: "Reward" })
+      .populate(rewardPopulateOptions)
       .populate({ path: "user", model: "User" })
       .populate({ path: "presetAgent", model: "User" })
       .lean(); // Convert to plain JavaScript objects
-
+    const filteredLuckies = req.query?.reward
+      ? luckies.filter((lucky) => lucky.reward !== null)
+      : luckies;
     responseMethod(
       { status: "succeed", data: { data: luckies, totalCount } },
       res
@@ -209,6 +219,7 @@ const generateLucky = async (qty, id) => {
 };
 
 const updateLucky = expressAsyncHandler(async (req, res, next) => {
+  console.log(req.body);
   const exist = await Lucky.findById(req.params.id);
   if (exist && exist?.status !== "out") {
     let body = {};
