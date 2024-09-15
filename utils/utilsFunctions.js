@@ -4,11 +4,11 @@ const { responseMethod } = require("./response");
 exports.checkExist = async (model, data, res) => {
   const exist = await model.findOne(data);
   // console.log(exist);
-  if (exist) {
+  if (exist && exist.status) {
     return exist;
   } else {
     responseMethod(
-      { status: "failed", message: "This User doesn't exist." },
+      { status: "failed", message: "This User doesn't exist (or) banned." },
       res
     );
   }

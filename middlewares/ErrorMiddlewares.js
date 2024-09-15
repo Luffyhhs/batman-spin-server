@@ -12,6 +12,7 @@ const notFound = (req, res, next) => {
 
 const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode == 200 ? 500 : res.statusCode;
+  console.log(err.stack);
   res.status(statusCode).send({
     status: "failed",
     message: err?.message,

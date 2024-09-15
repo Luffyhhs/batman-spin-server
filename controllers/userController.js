@@ -12,6 +12,7 @@ const { createTransaction } = require("./transactionControllers");
 exports.signUp = expressAsyncHandler(async (req, res, next) => {
   try {
     const body = { ...req.body };
+    console.log(body);
 
     const newUser = await postCreateMethod(User, body);
     if (newUser.role === "Agent") {
@@ -45,7 +46,7 @@ exports.getUsers = expressAsyncHandler(async (req, res, next) => {
     // console.log(req.user);
     if (req.user.role === "Admin") {
       totalCount = await User.countDocuments(query);
-      console.log(totalCount);
+      // console.log(totalCount);
       users = await query;
     } else {
       users = await query;
@@ -67,6 +68,7 @@ exports.getUsers = expressAsyncHandler(async (req, res, next) => {
 
 exports.logInDashboard = expressAsyncHandler(async (req, res, next) => {
   try {
+    console.log(req.body);
     const { name, password } = req.body;
     const exist = await checkExist(User, { name }, res);
     if (exist !== null) {
@@ -93,6 +95,7 @@ exports.logInDashboard = expressAsyncHandler(async (req, res, next) => {
             httpOnly: true,
             maxAge: 24 * process.env.COOKIE_EXPIRE * 60 * 60 * 1000,
           });
+          console.log(updateUser);
           responseMethod({ status: "succeed", data: updateUser }, res);
         } else {
           responseMethod(
@@ -197,7 +200,8 @@ exports.logout = expressAsyncHandler(async (req, res) => {
 });
 
 exports.updateUser = expressAsyncHandler(async (req, res, next) => {
-  const { id } = req.body;
+  const { id } = req.params;
+
   // console.log("update user ", req);
   // console.log(req.body);
   validateMongodbId(id);
@@ -205,77 +209,85 @@ exports.updateUser = expressAsyncHandler(async (req, res, next) => {
   let upLineUser = {};
   if (existUser) {
     upLineUser = await User.findById(existUser.upLine);
-  }
-  let body = {};
-  if (req.body?.name) {
-    body.name = req.body.name;
-  }
-  if (req.body?.status) {
-    body.status = req.body.status;
-  }
-  if (req.body?.unit) {
-    try {
-      const updatedUser = await User.findByIdAndUpdate(
-        id,
-        { $inc: { unit: req.body.unit } },
-        { new: true }
-      );
-      const transactionObj = {
-        fromId: req.user.id,
-        toId: updatedUser._id,
-        actionAmount: req.body.unit,
-        beforeAmount: existUser.unit,
-        afterAmount: updatedUser.unit,
-        type: "admin-unit",
-        status: req.body.unit > 0 ? "in" : "out",
-      };
-      createTransaction(transactionObj);
-    } catch (error) {
-      throw new Error(error);
+    let body = {};
+    if (req.body?.name) {
+      body.name = req.body.name;
     }
-  }
-  if (req.body?.deposit) {
-    if (upLineUser.unit < req.body.deposit) {
-      throw new Error("Your don't have enough unit to add deposit to user.");
-    } else {
+    if (req.body?.status !== undefined) {
+      body.status = req.body.status;
+    }
+    if (req.body?.unit) {
       try {
         const updatedUser = await User.findByIdAndUpdate(
           id,
-          { $inc: { deposits: req.body.deposit } },
-          { new: true }
-        );
-        const updatedUpLine = await User.findByIdAndUpdate(
-          updatedUser.upLine,
-          {
-            $inc: { unit: -req.body.deposit },
-          },
+          { $inc: { unit: req.body.unit } },
           { new: true }
         );
         const transactionObj = {
           fromId: req.user.id,
           toId: updatedUser._id,
-          actionAmount: req.body.deposit,
-          beforeAmount: existUser.deposits,
-          afterAmount: updatedUser.deposits,
-          type: "agent-unit",
-          status: req.body.unit > 0 ? "out" : "in",
+          actionAmount: req.body.unit,
+          beforeAmount: existUser.unit,
+          afterAmount: updatedUser.unit,
+          type: "admin-unit",
+          status: req.body.unit > 0 ? "in" : "out",
         };
         createTransaction(transactionObj);
       } catch (error) {
         throw new Error(error);
       }
     }
-  }
-
-  if (Object.entries(body).length !== 0) {
-    try {
-      const updatedUser = await putMethod(id, body, User);
-    } catch (error) {
-      throw new Error(error);
+    if (req.body?.deposit) {
+      if (upLineUser.unit < req.body.deposit) {
+        throw new Error("Your don't have enough unit to add deposit to user.");
+      } else {
+        try {
+          const updatedUser = await User.findByIdAndUpdate(
+            id,
+            { $inc: { deposits: req.body.deposit } },
+            { new: true }
+          );
+          const updatedUpLine = await User.findByIdAndUpdate(
+            updatedUser.upLine,
+            {
+              $inc: { unit: -req.body.deposit },
+            },
+            { new: true }
+          );
+          const transactionObj = {
+            fromId: req.user.id,
+            toId: updatedUser._id,
+            actionAmount: req.body.deposit,
+            beforeAmount: existUser.deposits,
+            afterAmount: updatedUser.deposits,
+            type: "agent-unit",
+            status: req.body.unit > 0 ? "out" : "in",
+          };
+          createTransaction(transactionObj);
+        } catch (error) {
+          throw new Error(error);
+        }
+      }
     }
+
+    if (Object.entries(body).length !== 0) {
+      try {
+        const updatedUser = await putMethod(id, body, User);
+      } catch (error) {
+        throw new Error(error);
+      }
+    }
+
+    responseMethod(
+      {
+        status: "succeed",
+        message: "User updated successfully.",
+      },
+      res
+    );
   }
 
-  res.sendStatus(204);
+  // res.sendStatus(204);
 });
 
 exports.updateUnitsFromAdmin = expressAsyncHandler(async (req, res, next) => {

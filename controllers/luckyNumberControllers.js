@@ -50,7 +50,7 @@ const getAllLucky = expressAsyncHandler(async (req, res, next) => {
   try {
     const queryStr = { ...req.query };
     // console.log(req.query?.reward);
-    console.log(queryStr);
+    // console.log(queryStr);
     const query = queryModification(Lucky, queryStr, req);
 
     // Check if the query object has the populate method
@@ -60,7 +60,7 @@ const getAllLucky = expressAsyncHandler(async (req, res, next) => {
     const rewardPopulateOptions = { path: "reward", model: "Reward" };
     // const userPopulateOptions = { path: "user", model: "User" };
     let totalCount = await Lucky.countDocuments();
-    console.log(totalCount);
+    // console.log(totalCount);
     if (req.query?.code || req.query?.status || req.query?.reward) {
       const { page, limit, ...rest } = req.query;
       totalCount = await Lucky.countDocuments(rest);
@@ -74,9 +74,13 @@ const getAllLucky = expressAsyncHandler(async (req, res, next) => {
       .populate({ path: "user", model: "User" })
       .populate({ path: "presetAgent", model: "User" })
       .lean(); // Convert to plain JavaScript objects
-    const filteredLuckies = req.query?.reward
-      ? luckies.filter((lucky) => lucky.reward !== null)
-      : luckies;
+    // console.log()
+    // const filteredLuckies = req.query?.reward
+    //   ? luckies.filter((lucky) => {
+    //       console.log(lucky);
+    //       return lucky.reward !== null;
+    //     })
+    //   : luckies;
     responseMethod(
       { status: "succeed", data: { data: luckies, totalCount } },
       res
@@ -219,7 +223,7 @@ const generateLucky = async (qty, id) => {
 };
 
 const updateLucky = expressAsyncHandler(async (req, res, next) => {
-  console.log(req.body);
+  // console.log(req.body);
   const exist = await Lucky.findById(req.params.id);
   if (exist && exist?.status !== "out") {
     let body = {};

@@ -14,12 +14,7 @@ const {
 const { protect, restrictTo } = require("../middlewares/restrictMiddleware");
 const router = express.Router();
 
-router
-  .route("/")
-  .post(signUp)
-  .get(protect, getUsers)
-  .put(protect, restrictTo("Admin", "Agent"), updateUser)
-  .patch(protect, restrictTo("Admin"), updateUnitsFromAdmin);
+router.route("/").post(signUp).get(protect, getUsers);
 
 router.route("/getSpin").get(protect, getSpinTime);
 router.route("/dasAuth").post(logInDashboard);
@@ -27,5 +22,9 @@ router.route("/auth").post(logInUser);
 router.route("/logout").get(logout);
 router.route("/refresh").get(handleRefreshToken);
 router.route("/downLine").get(protect, getDownLineUser);
+router
+  .route("/:id")
+  .post(protect, restrictTo("Admin", "Agent"), updateUser)
+  .put(protect, restrictTo("Admin"), updateUnitsFromAdmin);
 
 module.exports = router;

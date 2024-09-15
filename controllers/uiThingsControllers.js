@@ -15,6 +15,7 @@ exports.modifyUiThings = expressAsyncHandler(async (req, res, next) => {
     });
     let newUiThing;
     if (exist) {
+      console.log("first");
       if (req.body?.topName || req.body?.text) {
         newUiThing = await postModifyMethod(UiThingsModel, req.body, exist);
       } else {
