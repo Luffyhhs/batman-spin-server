@@ -10,6 +10,7 @@ const {
   getDownLineUser,
   getSpinTime,
   updateUnitsFromAdmin,
+  getOwnInfo,
 } = require("../controllers/userController");
 const { protect, restrictTo } = require("../middlewares/restrictMiddleware");
 const router = express.Router();
@@ -24,6 +25,7 @@ router.route("/refresh").get(handleRefreshToken);
 router.route("/downLine").get(protect, getDownLineUser);
 router
   .route("/:id")
+  .get(protect, getOwnInfo)
   .post(protect, restrictTo("Admin", "Agent"), updateUser)
   .put(protect, restrictTo("Admin"), updateUnitsFromAdmin);
 

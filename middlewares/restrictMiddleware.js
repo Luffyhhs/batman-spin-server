@@ -11,7 +11,12 @@ exports.protect = expressAsyncHandler(async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded?.id);
         req.user = user;
-        next();
+        if (!req.user.status) {
+          res.statusCode = 403;
+          throw new Error("You are banned. Please contact admin");
+        } else {
+          next();
+        }
       }
     } catch (error) {
       res.status(401);

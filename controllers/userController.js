@@ -66,12 +66,21 @@ exports.getUsers = expressAsyncHandler(async (req, res, next) => {
   }
 });
 
+exports.getOwnInfo = expressAsyncHandler(async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password -__v");
+    responseMethod({ status: "succeed", data: user }, res);
+  } catch (error) {
+    throw new Error(error);
+  }
+});
+
 exports.logInDashboard = expressAsyncHandler(async (req, res, next) => {
   try {
     console.log(req.body);
     const { name, password } = req.body;
     const exist = await checkExist(User, { name }, res);
-    if (exist !== null) {
+    if (exist !== null && exist.status) {
       if (exist?.role === "User") {
         responseMethod(
           {
@@ -104,6 +113,9 @@ exports.logInDashboard = expressAsyncHandler(async (req, res, next) => {
           );
         }
       }
+    } else {
+      res.statusCode = 403;
+      throw new Error("You Have Been Banned.");
     }
   } catch (error) {
     // console.log(error, "line 74");
@@ -116,7 +128,7 @@ exports.logInUser = expressAsyncHandler(async (req, res, next) => {
     const { name, password } = req.body;
     // console.log(req.body, "login user 96");
     const exist = await checkExist(User, { name }, res);
-    if (exist !== null) {
+    if (exist !== null && exist.status) {
       if (exist?.status !== false) {
         if (await exist.isPasswordMatched(password)) {
           const refreshToken = generateToken(exist);
@@ -142,6 +154,9 @@ exports.logInUser = expressAsyncHandler(async (req, res, next) => {
       } else {
         throw new Error("You have been banned.");
       }
+    } else {
+      res.statusCode = 403;
+      throw new Error("You have been banned.");
     }
   } catch (error) {
     // console.log(error, "line 111");
@@ -203,7 +218,7 @@ exports.updateUser = expressAsyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   // console.log("update user ", req);
-  // console.log(req.body);
+  console.log(req.body, req.params, req.user);
   validateMongodbId(id);
   const existUser = await checkExist(User, { _id: id }, res);
   let upLineUser = {};
@@ -237,27 +252,28 @@ exports.updateUser = expressAsyncHandler(async (req, res, next) => {
         throw new Error(error);
       }
     }
-    if (req.body?.deposit) {
-      if (upLineUser.unit < req.body.deposit) {
+    if (req.body?.deposits) {
+      if (upLineUser.unit < req.body.deposits) {
+        res.statusCode = 403;
         throw new Error("Your don't have enough unit to add deposit to user.");
       } else {
         try {
           const updatedUser = await User.findByIdAndUpdate(
             id,
-            { $inc: { deposits: req.body.deposit } },
+            { $inc: { deposits: req.body.deposits } },
             { new: true }
           );
           const updatedUpLine = await User.findByIdAndUpdate(
             updatedUser.upLine,
             {
-              $inc: { unit: -req.body.deposit },
+              $inc: { unit: -req.body.deposits },
             },
             { new: true }
           );
           const transactionObj = {
             fromId: req.user.id,
             toId: updatedUser._id,
-            actionAmount: req.body.deposit,
+            actionAmount: req.body.deposits,
             beforeAmount: existUser.deposits,
             afterAmount: updatedUser.deposits,
             type: "agent-unit",
