@@ -21,6 +21,12 @@ app.use((req, res, next) => {
   //   console.log(req.headers);
   next();
 });
+app.use("/", (req, res) => {
+  res.send({
+    status: "success",
+    message: "Server is up and running!",
+  });
+});
 app.use("/user", UserRouter);
 app.use("/reward", RewardsRouter);
 app.use("/ads", AdsRouter);
