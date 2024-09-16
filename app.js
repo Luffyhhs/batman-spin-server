@@ -21,12 +21,7 @@ app.use((req, res, next) => {
   //   console.log(req.headers);
   next();
 });
-app.use("/", (req, res) => {
-  res.send({
-    status: "success",
-    message: "Server is up and running!",
-  });
-});
+
 app.use("/user", UserRouter);
 app.use("/reward", RewardsRouter);
 app.use("/ads", AdsRouter);
@@ -38,4 +33,10 @@ app.use("/report", ReportRouter);
 
 app.use(errorHandler);
 app.use(notFound);
+app.use("/", (req, res) => {
+  res.send({
+    status: "success",
+    message: "Server is up and running!",
+  });
+});
 module.exports = app;
