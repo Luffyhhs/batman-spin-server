@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
+app.use(express.static("public"));
 app.use((req, res, next) => {
   //   console.log(req.headers);
   next();
