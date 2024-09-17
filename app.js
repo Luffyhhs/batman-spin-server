@@ -20,12 +20,16 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+// Handle preflight requests
+app.options("*", cors(corsOptions));
+
 app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static("public"));
 app.use((req, res, next) => {
-  //   console.log(req.headers);
+  console.log("Request Origin:", req.headers.origin);
+  console.log("Request Method:", req.method);
   next();
 });
 
