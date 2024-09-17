@@ -12,7 +12,14 @@ const UiThingRouter = require("./routes/uiThingsRoute");
 const ReportRouter = require("./routes/reportRoute");
 const LotteryRouter = require("./routes/lotteryRoute");
 
-app.use(cors());
+const corsOptions = {
+  origin: "https://batman-dashboard-final.onrender.com",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
