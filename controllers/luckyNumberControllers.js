@@ -45,6 +45,118 @@ async function checkCodeAvailability(string) {
     return false; // Return false in case of any error
   }
 }
+const generateLucky = async (qty, id) => {
+  try {
+    const generatedStrings = new Set();
+
+    while (generatedStrings.size < qty) {
+      const randomString = await generateRandomString();
+
+      if (!generatedStrings.has(randomString)) {
+        const codeAvailable = await checkCodeAvailability(randomString);
+
+        if (codeAvailable) {
+          generatedStrings.add(randomString);
+        }
+      }
+    }
+
+    const luckyArray = await Promise.all(
+      Array.from(generatedStrings).map(async (string) => {
+        const obj = {
+          code: string,
+          reward: id,
+        };
+        return await postCreateMethod(Lucky, obj);
+      })
+    );
+
+    return luckyArray.length === qty ? luckyArray : "failed";
+  } catch (error) {
+    console.error("An error occurred in generating lucky Number:", error);
+    throw new Error("An error occurred in generating lucky Number");
+  }
+};
+
+// const generateLucky = async (qty, id) => {
+//   //   console.log(qty, id);
+//   try {
+//     let randomString = "";
+//     let curQty = 0;
+//     const generatedStrings = [];
+
+//     while (curQty < qty) {
+//       randomString = await generateRandomString();
+//       // console.log(randomString);
+//       if (generatedStrings.includes(randomString)) {
+//         continue;
+//       }
+//       const codeAvailable = await checkCodeAvailability(randomString);
+
+//       if (codeAvailable) {
+//         // Add the random string to the database
+//         generatedStrings.push(randomString);
+//         curQty++;
+//       }
+//     }
+
+//     const luckyArray = Promise.all(
+//       generatedStrings.map(async (string) => {
+//         const obj = {
+//           code: string,
+//           reward: id,
+//         };
+//         const newLucky = await postCreateMethod(Lucky, obj);
+//       })
+//     );
+//     if ((await luckyArray).length == qty) return await luckyArray;
+//     else return "failed";
+//   } catch (error) {
+//     console.log(error);
+//     throw new Error("An error occurred in generating lucky Number");
+//   }
+// };
+// const generateLucky = async (qty, id) => {
+//   try {
+//     const worker = new Worker("./worker_threads/worker.js"); // Adjust the path to your worker script
+
+//     const generatedStrings = new Set();
+
+//     worker.postMessage({ qty });
+
+//     const workerPromise = new Promise((resolve, reject) => {
+//       worker.on("message", (message) => {
+//         message.forEach((string) => generatedStrings.add(string));
+//         resolve();
+//       });
+
+//       worker.on("error", reject);
+//       worker.on("exit", (code) => {
+//         if (code !== 0) {
+//           reject(new Error(`Worker stopped with exit code ${code}`));
+//         }
+//       });
+//     });
+
+//     await workerPromise;
+
+//     const luckyArray = [];
+//     for (const string of generatedStrings) {
+//       const obj = {
+//         code: string,
+//         reward: id,
+//       };
+//       const result = await postCreateMethod(Lucky, obj);
+//       luckyArray.push(result);
+//     }
+
+//     if (luckyArray.length === qty) return luckyArray;
+//     else return "failed";
+//   } catch (error) {
+//     console.log(error);
+//     throw new Error("An error occurred in generating lucky Number");
+//   }
+// };
 // @private
 // get all LuckyNumber
 // @access Admin
@@ -185,85 +297,7 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
 });
 
 // generate luckyNumber depending on the quantity of Reward is created
-// const generateLucky = async (qty, id) => {
-//   //   console.log(qty, id);
-//   try {
-//     let randomString = "";
-//     let curQty = 0;
-//     const generatedStrings = [];
 
-//     while (curQty < qty) {
-//       randomString = await generateRandomString();
-//       // console.log(randomString);
-//       if (generatedStrings.includes(randomString)) {
-//         continue;
-//       }
-//       const codeAvailable = await checkCodeAvailability(randomString);
-
-//       if (codeAvailable) {
-//         // Add the random string to the database
-//         generatedStrings.push(randomString);
-//         curQty++;
-//       }
-//     }
-
-//     const luckyArray = Promise.all(
-//       generatedStrings.map(async (string) => {
-//         const obj = {
-//           code: string,
-//           reward: id,
-//         };
-//         const newLucky = await postCreateMethod(Lucky, obj);
-//       })
-//     );
-//     if ((await luckyArray).length == qty) return await luckyArray;
-//     else return "failed";
-//   } catch (error) {
-//     console.log(error);
-//     throw new Error("An error occurred in generating lucky Number");
-//   }
-// };
-const generateLucky = async (qty, id) => {
-  try {
-    const worker = new Worker("./worker_threads/worker.js"); // Adjust the path to your worker script
-
-    const generatedStrings = new Set();
-
-    worker.postMessage({ qty });
-
-    const workerPromise = new Promise((resolve, reject) => {
-      worker.on("message", (message) => {
-        message.forEach((string) => generatedStrings.add(string));
-        resolve();
-      });
-
-      worker.on("error", reject);
-      worker.on("exit", (code) => {
-        if (code !== 0) {
-          reject(new Error(`Worker stopped with exit code ${code}`));
-        }
-      });
-    });
-
-    await workerPromise;
-
-    const luckyArray = [];
-    for (const string of generatedStrings) {
-      const obj = {
-        code: string,
-        reward: id,
-      };
-      const result = await postCreateMethod(Lucky, obj);
-      luckyArray.push(result);
-    }
-
-    if (luckyArray.length === qty) return luckyArray;
-    else return "failed";
-  } catch (error) {
-    console.log(error);
-    throw new Error("An error occurred in generating lucky Number");
-  }
-};
 const updateLucky = expressAsyncHandler(async (req, res, next) => {
   // console.log(req.body);
   const exist = await Lucky.findById(req.params.id);
