@@ -225,7 +225,7 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
 // };
 const generateLucky = async (qty, id) => {
   try {
-    const worker = new Worker("../worker_threads/worker.js"); // Adjust the path to your worker script
+    const worker = new Worker("./worker_threads/worker.js"); // Adjust the path to your worker script
 
     const generatedStrings = new Set();
 
