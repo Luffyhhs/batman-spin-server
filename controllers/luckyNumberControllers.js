@@ -60,16 +60,11 @@ const generateLucky = async (qty, id) => {
         }
       }
     }
-
-    const luckyArray = await Promise.all(
-      Array.from(generatedStrings).map(async (string) => {
-        const obj = {
-          code: string,
-          reward: id,
-        };
-        return await postCreateMethod(Lucky, obj);
-      })
-    );
+    const luckyObjects = Array.from(generatedStrings).map((string) => ({
+      code: string,
+      reward: id,
+    }));
+    const luckyArray = await Lucky.insertMany(luckyObjects);
 
     return luckyArray.length === qty ? luckyArray : "failed";
   } catch (error) {
