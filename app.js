@@ -12,7 +12,11 @@ const UiThingRouter = require("./routes/uiThingsRoute");
 const ReportRouter = require("./routes/reportRoute");
 const LotteryRouter = require("./routes/lotteryRoute");
 
-app.use(cors());
+// app.use(
+//   cors({
+//     origin: "*",
+//   })
+// );
 // Handle preflight requests
 // app.options("*", cors());
 
