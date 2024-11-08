@@ -54,7 +54,7 @@ const uploadToSpace = async (req, res, next) => {
     // console.log(file)
     const params = {
       Bucket: process.env.DO_SPACE_BUCKET,
-      Key: `ar7-spin/${file.filename}`,
+      Key: `lucky/${file.filename}`,
       Body: fs.createReadStream(file.path),
       // ContentDisposition: "inline",
       ACL: "public-read",
