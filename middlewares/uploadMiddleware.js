@@ -69,7 +69,7 @@ const uploadToSpace = async (req, res, next) => {
       req.uploadedFile = {
         Key: uploadedFile.Key,
         Bucket: uploadedFile.Bucket,
-        Location: `${process.env.DO_SPACE_REG_ENDPOINT}/${process.env.DO_SPACE_BUCKET}${uploadedFile.Key}`,
+        Location: `${process.env.DO_SPACE_REG_ENDPOINT}/${process.env.DO_SPACE_BUCKET}/${uploadedFile.Key}`,
       };
       // console.log(req.uploadedFile, "line 74");
       next();
