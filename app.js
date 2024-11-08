@@ -13,7 +13,7 @@ const ReportRouter = require("./routes/reportRoute");
 const LotteryRouter = require("./routes/lotteryRoute");
 
 const corsOptions = {
-  origin: "*",
+  // origin: "*",
   methods: "GET, POST, PUT, PATCH, DELETE",
   allowedHeaders: "Content-Type, Authorization",
   credentials: true,
