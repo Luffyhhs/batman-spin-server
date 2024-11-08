@@ -54,7 +54,7 @@ const uploadToSpace = async (req, res, next) => {
     // console.log(file)
     const params = {
       Bucket: process.env.DO_SPACE_BUCKET,
-      Key: `lucky/${file.filename}`,
+      Key: `/lucky/${file.filename}`,
       Body: fs.createReadStream(file.path),
       // ContentDisposition: "inline",
       ACL: "public-read",
@@ -69,7 +69,7 @@ const uploadToSpace = async (req, res, next) => {
       req.uploadedFile = {
         Key: uploadedFile.Key,
         Bucket: uploadedFile.Bucket,
-        Location: `${process.env.DO_SPACE_REG_ENDPOINT}/${uploadedFile.Key}`,
+        Location: `${process.env.DO_SPACE_REG_ENDPOINT}/${process.env.DO_SPACE_BUCKET}${uploadedFile.Key}`,
       };
       console.log(req.uploadedFile, "line 74");
       next();
