@@ -5,6 +5,7 @@ const {
   updateLucky,
 } = require("../controllers/luckyNumberControllers");
 const { protect } = require("../middlewares/restrictMiddleware");
+// const { getAllLucky, getRandomLuckyNumber } = require("../controllers/test");
 const router = express.Router();
 
 router.route("/").get(protect, getAllLucky);

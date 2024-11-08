@@ -234,16 +234,14 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
           { new: true }
         );
       } else {
-        const allAvailableNumbers = await Lucky.find({
-          status: { $in: ["available"] },
-        });
+        const allAvailableNumbers = await Lucky.aggregate([
+          { $match: { status: "available" } },
+          { $sample: { size: 1 } },
+        ]);
         if (allAvailableNumbers.length === 0) {
           updatedLucky === null;
         } else {
-          const randomIndex = Math.floor(
-            Math.random() * allAvailableNumbers.length
-          );
-          const randomLucky = allAvailableNumbers[randomIndex];
+          const randomLucky = allAvailableNumbers[0];
           updatedLucky = await Lucky.findByIdAndUpdate(
             randomLucky._id,
             {
@@ -258,15 +256,10 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
       updatedLucky = givenLucky;
     }
 
-    // console.log(updatedLucky, "line 110");
     if (updatedLucky) {
       const index = allRewards.findIndex(
         (reward) => reward._id.toString() === updatedLucky.reward.toString()
       );
-      // console.log(
-      //   Math.floor(18000 - ((index + 1) * 360) / wheel.slices),
-      //   wheel
-      // );
       responseMethod(
         {
           status: "Succeed",

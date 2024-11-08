@@ -8,12 +8,13 @@ const {
 } = require("../services/query");
 const { responseMethod } = require("../utils/response");
 const {
-  generateLucky,
+  // generateLucky,
   modifyLuckyByRewardQuantity,
   deleteLucky,
 } = require("./luckyNumberControllers");
 const { deleteReport } = require("./reportControllers");
 const WheelModel = require("../models/WheelModel");
+const { generateLucky } = require("./test");
 
 exports.modifyRewards = expressAsyncHandler(async (req, res) => {
   // console.log(req.body);

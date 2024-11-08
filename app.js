@@ -12,21 +12,38 @@ const UiThingRouter = require("./routes/uiThingsRoute");
 const ReportRouter = require("./routes/reportRoute");
 const LotteryRouter = require("./routes/lotteryRoute");
 
-// app.use(
-//   cors({
-//     origin: "*",
-//   })
-// );
+const corsOptions = {
+  origin: "*",
+  methods: "GET, POST, PUT, PATCH, DELETE",
+  allowedHeaders: "Content-Type, Authorization",
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
+// Use CORS middleware with options
+app.use(cors(corsOptions));
+
 // Handle preflight requests
-// app.options("*", cors());
+// app.options("*", cors(corsOptions));
+// app.use(function (req, res, next) {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader(
+//     "Access-Control-Allow-Methods",
+//     "GET, POST, PUT, PATCH, DELETE"
+//   );
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//   res.setHeader("Access-Control-Allow-Credentials", "true");
+//   next();
+// });
 
 app.use(express.json()); // Parses JSON bodies
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static("public"));
 app.use((req, res, next) => {
-  console.log("Request Origin:", req.headers.origin);
-  console.log("Request Method:", req.method);
+  // console.log("Request Origin:", req.headers.origin);
+  // console.log("Request Method:", req.method);
   next();
 });
 
