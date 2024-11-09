@@ -42,7 +42,7 @@ exports.getAllReport = expressAsyncHandler(async (req, res, next) => {
       rewardPopulateOptions,
       userPopulateOptions,
       agentPopulateOptions,
-      { path: "lucky", model: "Lucky" },
+      { path: "lucky", model: "LuckyNumber" },
     ];
     if (req.user.role === "Admin") {
       reports = await query.populate(populateOptions);

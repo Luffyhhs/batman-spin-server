@@ -360,8 +360,9 @@ exports.getSpinTime = expressAsyncHandler(async (req, res, next) => {
     // console.log(req.user);
     // console.log(req);
     const agentLimit = await LimitModel.findOne({ agent: req.user.upLine });
-
+    console.log(agentLimit);
     let spinTime = Math.floor(req.user.deposits / agentLimit.limit);
+    console.log(spinTime);
     responseMethod({ spinTime }, res);
   } catch (error) {
     console.log(error);

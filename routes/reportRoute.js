@@ -9,6 +9,6 @@ const router = express.Router();
 router
   .route("/")
   .get(protect, getAllReport)
-  .put(protect, restrictTo("agent"), updateReport);
+  .post(protect, restrictTo("Agent"), updateReport);
 
 module.exports = router;
