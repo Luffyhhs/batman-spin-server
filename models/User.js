@@ -28,10 +28,6 @@ const userSchema = new mongoose.Schema(
       enum: ["Admin", "Agent", "User"],
       default: "User",
     },
-    limit: {
-      type: Number,
-      default: 10000,
-    },
     status: { type: Boolean, default: true },
     refreshToken: { type: String },
     unit: { type: Number, default: 0 },
