@@ -265,6 +265,7 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
           model: "Reward",
         });
       }
+      console.log(updatedLucky.reward, "random");
       responseMethod(
         {
           status: "Succeed",
