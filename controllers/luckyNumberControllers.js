@@ -259,6 +259,12 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
       const index = allRewards.findIndex(
         (reward) => reward._id.toString() === updatedLucky.reward.toString()
       );
+      if (updatedLucky?.status === "out") {
+        updatedLucky = updatedLucky.populate({
+          path: "reward",
+          model: "Reward",
+        });
+      }
       responseMethod(
         {
           status: "Succeed",
