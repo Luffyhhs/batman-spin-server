@@ -1,5 +1,5 @@
-exports.queryModification = (Model, queryObj, req) => {
-  const excludeFields = ["page", "sort", "limit", "fields"];
+exports.queryModification = (Model, queryObj, req, searchFields = []) => {
+  const excludeFields = ["page", "sort", "limit", "fields", "keyword"];
   excludeFields.forEach((el) => delete queryObj[el]);
 
   function convertKeysAndValues(obj) {
@@ -62,6 +62,14 @@ exports.queryModification = (Model, queryObj, req) => {
   let convertedObj = convertKeysAndValues(queryObj);
   let queryStr = JSON.stringify(convertedObj);
   let query = Model.find(JSON.parse(queryStr));
+  // Add search logic if keyword is present in the query
+  if (req.query.keyword) {
+    const keyword = req.query.keyword;
+    const searchQuery = searchFields.map((field) => ({
+      [field]: { $regex: new RegExp(keyword, "i") },
+    }));
+    query = query.find({ $or: searchQuery });
+  }
 
   if (req.query.sort) {
     const sortBy = req.query.sort.split(",").join(" ");

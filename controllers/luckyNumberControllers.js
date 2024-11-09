@@ -159,9 +159,8 @@ const getAllLucky = expressAsyncHandler(async (req, res, next) => {
   try {
     const queryStr = { ...req.query };
     // console.log(req.query?.reward);
-    // console.log(queryStr);
-    const query = queryModification(Lucky, queryStr, req);
-
+    console.log(queryStr);
+    const query = queryModification(Lucky, queryStr, req, ["code"]);
     // Check if the query object has the populate method
     if (typeof query.populate !== "function") {
       throw new Error("Returned query object does not have a populate method");
@@ -170,7 +169,7 @@ const getAllLucky = expressAsyncHandler(async (req, res, next) => {
     // const userPopulateOptions = { path: "user", model: "User" };
     let totalCount = await Lucky.countDocuments();
     // console.log(totalCount);
-    if (req.query?.code || req.query?.status || req.query?.reward) {
+    if (req.query?.keyword || req.query?.status || req.query?.reward) {
       const { page, limit, ...rest } = req.query;
       totalCount = await Lucky.countDocuments(rest);
       if (req.query?.reward) {
