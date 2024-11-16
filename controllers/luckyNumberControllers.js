@@ -1,6 +1,6 @@
 const expressAsyncHandler = require("express-async-handler");
 const Lucky = require("../models/LuckyNumberModel");
-const cryptoRandomString = require("crypto-random-string");
+const cryptoRandomString = import("crypto-random-string");
 const { Worker } = require("node:worker_threads");
 
 const {
