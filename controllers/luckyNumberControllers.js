@@ -19,10 +19,10 @@ const { queryModification } = require("../utils/queryModification");
 
 // Generate Random String
 async function generateRandomString() {
+  const uppercaseAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const randomLetters = randomstring.generate({
     length: 2,
-    charset: "alphabetic",
-    capitalization: "uppercase",
+    charset: uppercaseAlphabet,
   });
   //   console.log(randomLetters);
   const randomNumbers = randomstring.generate({
