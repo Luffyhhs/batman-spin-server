@@ -1,6 +1,6 @@
 const expressAsyncHandler = require("express-async-handler");
 const Lucky = require("../models/LuckyNumberModel");
-const randomstring = require("randomstring");
+const cryptoRandomString = require("crypto-random-string");
 const { Worker } = require("node:worker_threads");
 
 const {
@@ -20,14 +20,14 @@ const { queryModification } = require("../utils/queryModification");
 // Generate Random String
 async function generateRandomString() {
   const uppercaseAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const randomLetters = randomstring.generate({
+  const randomLetters = cryptoRandomString.generate({
     length: 2,
-    charset: uppercaseAlphabet,
+    type: "uppercase",
   });
   //   console.log(randomLetters);
-  const randomNumbers = randomstring.generate({
+  const randomNumbers = cryptoRandomString.generate({
     length: 8,
-    charset: "numeric",
+    type: "numeric",
   });
   //   console.log(randomNumbers);
   const randomString = randomLetters + randomNumbers;
