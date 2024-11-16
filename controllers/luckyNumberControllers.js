@@ -1,6 +1,5 @@
 const expressAsyncHandler = require("express-async-handler");
 const Lucky = require("../models/LuckyNumberModel");
-const cryptoRandomString = import("crypto-random-string");
 const { Worker } = require("node:worker_threads");
 
 const {
@@ -16,62 +15,77 @@ const RewardModel = require("../models/RewardModel");
 const ReportModel = require("../models/ReportModel");
 const WheelModel = require("../models/WheelModel");
 const { queryModification } = require("../utils/queryModification");
+const { promisify } = require("util");
+const crypto = require("crypto");
 
-// Generate Random String
+// Promisify the randomBytes function
+const randomBytesAsync = promisify(crypto.randomBytes);
+
+// Generate a random string
 async function generateRandomString() {
-  const uppercaseAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const randomLetters = cryptoRandomString.generate({
-    length: 2,
-    type: "uppercase",
-  });
-  //   console.log(randomLetters);
-  const randomNumbers = cryptoRandomString.generate({
-    length: 8,
-    type: "numeric",
-  });
-  //   console.log(randomNumbers);
-  const randomString = randomLetters + randomNumbers;
-  //   console.log(randomString);
-  return randomString;
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const buffer = await randomBytesAsync(5);
+  // Generate two random alphabetic characters
+  const randomLetters = Array.from(
+    { length: 2 },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)]
+  ).join("");
+
+  const randomNumbers = buffer.readUIntBE(2, 3) % 100000000;
+  return `${randomLetters}${randomNumbers.toString().padStart(8, "0")}`;
 }
 
-// check code is available or existed
-async function checkCodeAvailability(string) {
-  try {
-    const code = await Lucky.findOne({ code: string });
-    return !code; // Return true if code is not found, false otherwise
-  } catch (error) {
-    // console.log(error);
-    return false; // Return false in case of any error
-  }
+// Check code availability in batch
+async function checkCodeAvailabilityBatch(codes) {
+  const existingCodes = await Lucky.find({ code: { $in: codes } })
+    .lean()
+    .select("code");
+  const existingCodeSet = new Set(existingCodes.map((doc) => doc.code));
+  return codes.filter((code) => !existingCodeSet.has(code));
 }
-const generateLucky = async (qty, id) => {
-  try {
-    const generatedStrings = new Set();
 
-    while (generatedStrings.size < qty) {
-      const randomString = await generateRandomString();
+// Generate and save lucky codes
+async function generateAndSaveLuckyCodes(qty, id, batchSize = 1000) {
+  let generatedCount = 0;
+  const allGeneratedCodes = [];
 
-      if (!generatedStrings.has(randomString)) {
-        const codeAvailable = await checkCodeAvailability(randomString);
+  while (generatedCount < qty) {
+    const batchQty = Math.min(batchSize, qty - generatedCount);
+    const batchCodes = await generateBatch(batchQty);
+    const availableCodes = await checkCodeAvailabilityBatch(batchCodes);
 
-        if (codeAvailable) {
-          generatedStrings.add(randomString);
-        }
-      }
+    if (availableCodes.length > 0) {
+      const luckyObjects = availableCodes.map((code) => ({ code, reward: id }));
+      await Lucky.insertMany(luckyObjects);
+      allGeneratedCodes.push(...luckyObjects);
+      generatedCount += availableCodes.length;
     }
-    const luckyObjects = Array.from(generatedStrings).map((string) => ({
-      code: string,
-      reward: id,
-    }));
-    const luckyArray = await Lucky.insertMany(luckyObjects);
 
-    return luckyArray.length === qty ? luckyArray : "failed";
+    console.log(`Generated ${generatedCount} out of ${qty} codes`);
+  }
+
+  return allGeneratedCodes;
+}
+
+// Generate a batch of random strings
+async function generateBatch(size) {
+  const batch = [];
+  for (let i = 0; i < size; i++) {
+    batch.push(await generateRandomString());
+  }
+  return batch;
+}
+
+// Main function to generate lucky codes
+async function generateLucky(qty, id) {
+  try {
+    const result = await generateAndSaveLuckyCodes(qty, id);
+    return result.length === qty ? result : "failed";
   } catch (error) {
     console.error("An error occurred in generating lucky Number:", error);
     throw new Error("An error occurred in generating lucky Number");
   }
-};
+}
 
 // @private
 // get all LuckyNumber
@@ -337,141 +351,6 @@ const getLuckyById = expressAsyncHandler(async (req, res, next) => {
   }
 });
 
-// const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
-//   try {
-//     // get currentUser from req.user
-//     const currentUser = await User.findById(req.user.id);
-//     //check total deposit
-//     const totalDeposit = currentUser.deposits.reduce(
-//       (prev, curr) => prev + curr,
-//       0
-//     );
-//     // upLine User Limit from limit model
-//     const upLineUserLimit = await LimitModel.findOne({
-//       agent: currentUser.upLine,
-//     });
-//     // check if total deposit greater than equal to upLine user limit
-//     if (upLineUserLimit.limit <= totalDeposit) {
-//       // get all availableLucky
-//       const allAvailableLucky = await Lucky.find({
-//         status: "available",
-//       }).select("code");
-
-//       let numOfTickets = Math.floor(totalDeposit / upLineUserLimit.limit);
-//       let leftAmount = totalDeposit % upLineUserLimit.limit;
-//       let ticketsArray = [];
-//       while (numOfTickets > ticketsArray.length) {
-//         const randomIndex = Math.floor(
-//           Math.random() * allAvailableLucky.length
-//         );
-//         let randomLucky = allAvailableLucky[randomIndex];
-//         // add random to return array
-//         ticketsArray.push(randomLucky);
-//         // remove randomLucky from allAvailableLucky Array
-//         allAvailableLucky.splice(randomIndex, 1);
-//         await Lucky.findByIdAndUpdate(
-//           randomLucky._id,
-//           {
-//             user: currentUser._id,
-//             status: "requested",
-//           },
-//           { new: true }
-//         );
-//       }
-//       await User.findByIdAndUpdate(currentUser._id, { $set: { deposits: [] } });
-//       const updatedUser = await User.findByIdAndUpdate(
-//         currentUser._id,
-//         { $push: { deposits: leftAmount } },
-//         { new: true }
-//       );
-//       console.log(ticketsArray.length);
-//       res.json({ data: ticketsArray });
-//     } else {
-//       throw new Error("You do not have sufficient deposit amount to get code.");
-//     }
-//   } catch (e) {
-//     throw new Error(e);
-//   }
-// });
-// const generateLucky = async (qty, id) => {
-//   //   console.log(qty, id);
-//   try {
-//     let randomString = "";
-//     let curQty = 0;
-//     const generatedStrings = [];
-
-//     while (curQty < qty) {
-//       randomString = await generateRandomString();
-//       // console.log(randomString);
-//       if (generatedStrings.includes(randomString)) {
-//         continue;
-//       }
-//       const codeAvailable = await checkCodeAvailability(randomString);
-
-//       if (codeAvailable) {
-//         // Add the random string to the database
-//         generatedStrings.push(randomString);
-//         curQty++;
-//       }
-//     }
-
-//     const luckyArray = Promise.all(
-//       generatedStrings.map(async (string) => {
-//         const obj = {
-//           code: string,
-//           reward: id,
-//         };
-//         const newLucky = await postCreateMethod(Lucky, obj);
-//       })
-//     );
-//     if ((await luckyArray).length == qty) return await luckyArray;
-//     else return "failed";
-//   } catch (error) {
-//     console.log(error);
-//     throw new Error("An error occurred in generating lucky Number");
-//   }
-// };
-// const generateLucky = async (qty, id) => {
-//   try {
-//     const worker = new Worker("./worker_threads/worker.js"); // Adjust the path to your worker script
-
-//     const generatedStrings = new Set();
-
-//     worker.postMessage({ qty });
-
-//     const workerPromise = new Promise((resolve, reject) => {
-//       worker.on("message", (message) => {
-//         message.forEach((string) => generatedStrings.add(string));
-//         resolve();
-//       });
-
-//       worker.on("error", reject);
-//       worker.on("exit", (code) => {
-//         if (code !== 0) {
-//           reject(new Error(`Worker stopped with exit code ${code}`));
-//         }
-//       });
-//     });
-
-//     await workerPromise;
-
-//     const luckyArray = [];
-//     for (const string of generatedStrings) {
-//       const obj = {
-//         code: string,
-//         reward: id,
-//       };
-//       const result = await postCreateMethod(Lucky, obj);
-//       luckyArray.push(result);
-//     }
-
-//     if (luckyArray.length === qty) return luckyArray;
-//     else return "failed";
-//   } catch (error) {
-//     console.log(error);
-//     throw new Error("An error occurred in generating lucky Number");
-//   }
-// };
 module.exports = {
   generateLucky,
   modifyLuckyByRewardQuantity,
@@ -479,7 +358,6 @@ module.exports = {
   getRandomLuckyNumber,
   getAllLucky,
   updateLucky,
-  checkCodeAvailability,
   generateRandomString,
   getLuckyById,
 };

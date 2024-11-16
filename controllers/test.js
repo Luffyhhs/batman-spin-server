@@ -312,8 +312,14 @@ const randomBytesAsync = promisify(crypto.randomBytes);
 
 // Generate a random string
 async function generateRandomString() {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const buffer = await randomBytesAsync(5);
-  const randomLetters = buffer.toString("base64").substr(0, 2).toUpperCase();
+  // Generate two random alphabetic characters
+  const randomLetters = Array.from(
+    { length: 2 },
+    () => alphabet[Math.floor(Math.random() * alphabet.length)]
+  ).join("");
+
   const randomNumbers = buffer.readUIntBE(2, 3) % 100000000;
   return `${randomLetters}${randomNumbers.toString().padStart(8, "0")}`;
 }
