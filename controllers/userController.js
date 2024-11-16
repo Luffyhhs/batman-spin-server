@@ -77,7 +77,6 @@ exports.getOwnInfo = expressAsyncHandler(async (req, res, next) => {
 
 exports.logInDashboard = expressAsyncHandler(async (req, res, next) => {
   try {
-    console.log(req.body);
     const { name, password } = req.body;
     const exist = await checkExist(User, { name }, res);
     if (exist !== null && exist.status) {
@@ -104,7 +103,6 @@ exports.logInDashboard = expressAsyncHandler(async (req, res, next) => {
             httpOnly: true,
             maxAge: 24 * process.env.COOKIE_EXPIRE * 60 * 60 * 1000,
           });
-          console.log(updateUser);
           responseMethod({ status: "succeed", data: updateUser }, res);
         } else {
           responseMethod(
@@ -217,8 +215,6 @@ exports.logout = expressAsyncHandler(async (req, res) => {
 exports.updateUser = expressAsyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
-  // console.log("update user ", req);
-  console.log(req.body, req.params, req.user);
   validateMongodbId(id);
   const existUser = await checkExist(User, { _id: id }, res);
   let upLineUser = {};
@@ -360,9 +356,7 @@ exports.getSpinTime = expressAsyncHandler(async (req, res, next) => {
     // console.log(req.user);
     // console.log(req);
     const agentLimit = await LimitModel.findOne({ agent: req.user.upLine });
-    console.log(agentLimit);
     let spinTime = Math.floor(req.user.deposits / agentLimit.limit);
-    console.log(spinTime);
     responseMethod({ spinTime }, res);
   } catch (error) {
     console.log(error);

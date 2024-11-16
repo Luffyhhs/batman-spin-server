@@ -3,6 +3,8 @@ const ReportModel = require("../models/ReportModel");
 const { getMethod } = require("../services/query");
 const { responseMethod } = require("../utils/response");
 const { queryModification } = require("../utils/queryModification");
+const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Types;
 
 exports.getAllReport = expressAsyncHandler(async (req, res, next) => {
   try {
@@ -65,6 +67,7 @@ exports.getAllReport = expressAsyncHandler(async (req, res, next) => {
       res
     );
   } catch (error) {
+    console.log(error.stack);
     throw new Error(error);
   }
 });
@@ -94,3 +97,109 @@ exports.deleteReport = async (deletedRewardId) => {
   });
   return deletedReport;
 };
+
+// Your existing query modification function
+// const queryStr = { ...req.query };
+// const query = queryModification(ReportModel, queryStr, req);
+
+// const rewardPopulateOptions = { path: "reward", model: "Reward" };
+// const agentPopulateOptions = { path: "agent", model: "User" };
+// const userPopulateOptions = { path: "user", model: "User" };
+
+// if (req.query?.reward) {
+//   rewardPopulateOptions.match = {
+//     name: req.query.reward,
+//   };
+// }
+
+// if (req.query?.agent) {
+//   agentPopulateOptions.match = {
+//     _id: req.query.agent,
+//   };
+// }
+
+// if (req.query?.user) {
+//   userPopulateOptions.match = {
+//     name: req.query.user,
+//   };
+// }
+
+// if (req.user.role === "Agent") {
+//   userPopulateOptions.match = {
+//     ...userPopulateOptions.match,
+//     upLine: req.user.id,
+//   };
+// }
+
+// const aggregatePipeline = [
+//   { $match: query._conditions }, // Use the conditions from your query object
+//   {
+//     $lookup: {
+//       from: "rewards",
+//       localField: "reward",
+//       foreignField: "_id",
+//       as: "reward",
+//     },
+//   },
+//   {
+//     $lookup: {
+//       from: "users",
+//       localField: "agent",
+//       foreignField: "_id",
+//       as: "agent",
+//     },
+//   },
+//   {
+//     $lookup: {
+//       from: "users",
+//       localField: "user",
+//       foreignField: "_id",
+//       as: "user",
+//     },
+//   },
+//   { $unwind: "$reward" },
+//   { $unwind: "$agent" },
+//   { $unwind: "$user" },
+//   {
+//     $lookup: {
+//       from: "luckynumbers",
+//       localField: "lucky",
+//       foreignField: "_id",
+//       as: "lucky",
+//     },
+//   },
+//   { $unwind: { path: "$lucky", preserveNullAndEmptyArrays: true } },
+// ];
+
+// if (req.query?.reward) {
+//   aggregatePipeline.push({
+//     $match: { "reward.name": req.query.reward },
+//   });
+// }
+
+// if (req.query?.user) {
+//   aggregatePipeline.push({
+//     $match: { "user.name": req.query.user },
+//   });
+// }
+
+// const { page, limit, ...rest } = req.query;
+// let totalCount = await ReportModel.aggregate([
+//   { $match: rest },
+//   { $count: "count" },
+// ]);
+
+// let reports = await ReportModel.aggregate(aggregatePipeline);
+
+// if (req.user.role === "Agent") {
+//   reports = reports.filter(
+//     (report) => report.user.upLine.toString() === req.user.id.toString()
+//   );
+// } else if (req.user.role !== "Admin") {
+//   reports = reports.filter(
+//     (report) => report.user._id.toString() === req.user.id.toString()
+//   );
+//   totalCount = reports.length;
+// }
+
+// responseMethod({ status: "succeed", data: { data: reports, totalCount } }, res);

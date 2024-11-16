@@ -8,14 +8,14 @@ const {
 const { responseMethod } = require("../utils/response");
 
 exports.modifyUiThings = expressAsyncHandler(async (req, res, next) => {
-  console.log(req.body);
+  // console.log(req.body);
   try {
     const exist = await UiThingsModel.findOne({
       settingName: req.body.settingName,
     });
     let newUiThing;
     if (exist) {
-      console.log("first");
+      // console.log("first");
       if (req.body?.topName || req.body?.text) {
         newUiThing = await postModifyMethod(UiThingsModel, req.body, exist);
       } else {
@@ -77,7 +77,7 @@ exports.getMoreWinners = expressAsyncHandler(async (req, res, next) => {
     const moreWinners = await UiThingsModel.findOne({
       settingName: "More Winner",
     });
-    console.log(moreWinners);
+    // console.log(moreWinners);
     if (!moreWinners) {
       throw new Error("MoreWinners not found");
     }

@@ -73,85 +73,6 @@ const generateLucky = async (qty, id) => {
   }
 };
 
-// const generateLucky = async (qty, id) => {
-//   //   console.log(qty, id);
-//   try {
-//     let randomString = "";
-//     let curQty = 0;
-//     const generatedStrings = [];
-
-//     while (curQty < qty) {
-//       randomString = await generateRandomString();
-//       // console.log(randomString);
-//       if (generatedStrings.includes(randomString)) {
-//         continue;
-//       }
-//       const codeAvailable = await checkCodeAvailability(randomString);
-
-//       if (codeAvailable) {
-//         // Add the random string to the database
-//         generatedStrings.push(randomString);
-//         curQty++;
-//       }
-//     }
-
-//     const luckyArray = Promise.all(
-//       generatedStrings.map(async (string) => {
-//         const obj = {
-//           code: string,
-//           reward: id,
-//         };
-//         const newLucky = await postCreateMethod(Lucky, obj);
-//       })
-//     );
-//     if ((await luckyArray).length == qty) return await luckyArray;
-//     else return "failed";
-//   } catch (error) {
-//     console.log(error);
-//     throw new Error("An error occurred in generating lucky Number");
-//   }
-// };
-// const generateLucky = async (qty, id) => {
-//   try {
-//     const worker = new Worker("./worker_threads/worker.js"); // Adjust the path to your worker script
-
-//     const generatedStrings = new Set();
-
-//     worker.postMessage({ qty });
-
-//     const workerPromise = new Promise((resolve, reject) => {
-//       worker.on("message", (message) => {
-//         message.forEach((string) => generatedStrings.add(string));
-//         resolve();
-//       });
-
-//       worker.on("error", reject);
-//       worker.on("exit", (code) => {
-//         if (code !== 0) {
-//           reject(new Error(`Worker stopped with exit code ${code}`));
-//         }
-//       });
-//     });
-
-//     await workerPromise;
-
-//     const luckyArray = [];
-//     for (const string of generatedStrings) {
-//       const obj = {
-//         code: string,
-//         reward: id,
-//       };
-//       const result = await postCreateMethod(Lucky, obj);
-//       luckyArray.push(result);
-//     }
-
-//     if (luckyArray.length === qty) return luckyArray;
-//     else return "failed";
-//   } catch (error) {
-//     console.log(error);
-//     throw new Error("An error occurred in generating lucky Number");
-//   }
-// };
 // @private
 // get all LuckyNumber
 // @access Admin
@@ -159,7 +80,7 @@ const getAllLucky = expressAsyncHandler(async (req, res, next) => {
   try {
     const queryStr = { ...req.query };
     // console.log(req.query?.reward);
-    console.log(queryStr);
+    // console.log(queryStr);
     const query = queryModification(Lucky, queryStr, req, ["code"]);
     // Check if the query object has the populate method
     if (typeof query.populate !== "function") {
@@ -265,7 +186,7 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
           model: "Reward",
         });
       }
-      console.log(updatedLucky.reward, "random");
+      // console.log(updatedLucky, "random");
       responseMethod(
         {
           status: "Succeed",
@@ -285,7 +206,7 @@ const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
       );
     }
   } catch (e) {
-    console.log(e);
+    console.log(e.stack);
     throw new Error(e);
   }
 });
@@ -302,8 +223,10 @@ const updateLucky = expressAsyncHandler(async (req, res, next) => {
     } else {
       body.status = exist.status === "available" ? "preset" : "available";
     }
+    console.log(body);
     try {
       const updatedLucky = await putMethod(req.params.id, body, Lucky);
+      console.log(updatedLucky);
       // logic for updating quantity of reward
       if (updatedLucky.status === "preset") {
         await RewardModel.findByIdAndUpdate(updatedLucky.reward, {
@@ -344,6 +267,7 @@ const updateLucky = expressAsyncHandler(async (req, res, next) => {
         {
           status: "succeed",
           message: "Lucky updated successfully.",
+          updatedLucky,
         },
         res
       );
@@ -392,6 +316,26 @@ const modifyLuckyByRewardQuantity = async (reward, newQuantity) => {
     throw new Error(error);
   }
 };
+
+const getLuckyById = expressAsyncHandler(async (req, res, next) => {
+  try {
+    let lucky = Lucky.findById(req.params.id);
+    console.log(lucky);
+    lucky = await lucky.populate({
+      path: "reward",
+      model: "Reward",
+    });
+    responseMethod(
+      {
+        status: "succeed",
+        data: lucky,
+      },
+      res
+    );
+  } catch (error) {
+    throw new Error(error);
+  }
+});
 
 // const getRandomLuckyNumber = expressAsyncHandler(async (req, res, next) => {
 //   try {
@@ -449,6 +393,85 @@ const modifyLuckyByRewardQuantity = async (reward, newQuantity) => {
 //     throw new Error(e);
 //   }
 // });
+// const generateLucky = async (qty, id) => {
+//   //   console.log(qty, id);
+//   try {
+//     let randomString = "";
+//     let curQty = 0;
+//     const generatedStrings = [];
+
+//     while (curQty < qty) {
+//       randomString = await generateRandomString();
+//       // console.log(randomString);
+//       if (generatedStrings.includes(randomString)) {
+//         continue;
+//       }
+//       const codeAvailable = await checkCodeAvailability(randomString);
+
+//       if (codeAvailable) {
+//         // Add the random string to the database
+//         generatedStrings.push(randomString);
+//         curQty++;
+//       }
+//     }
+
+//     const luckyArray = Promise.all(
+//       generatedStrings.map(async (string) => {
+//         const obj = {
+//           code: string,
+//           reward: id,
+//         };
+//         const newLucky = await postCreateMethod(Lucky, obj);
+//       })
+//     );
+//     if ((await luckyArray).length == qty) return await luckyArray;
+//     else return "failed";
+//   } catch (error) {
+//     console.log(error);
+//     throw new Error("An error occurred in generating lucky Number");
+//   }
+// };
+// const generateLucky = async (qty, id) => {
+//   try {
+//     const worker = new Worker("./worker_threads/worker.js"); // Adjust the path to your worker script
+
+//     const generatedStrings = new Set();
+
+//     worker.postMessage({ qty });
+
+//     const workerPromise = new Promise((resolve, reject) => {
+//       worker.on("message", (message) => {
+//         message.forEach((string) => generatedStrings.add(string));
+//         resolve();
+//       });
+
+//       worker.on("error", reject);
+//       worker.on("exit", (code) => {
+//         if (code !== 0) {
+//           reject(new Error(`Worker stopped with exit code ${code}`));
+//         }
+//       });
+//     });
+
+//     await workerPromise;
+
+//     const luckyArray = [];
+//     for (const string of generatedStrings) {
+//       const obj = {
+//         code: string,
+//         reward: id,
+//       };
+//       const result = await postCreateMethod(Lucky, obj);
+//       luckyArray.push(result);
+//     }
+
+//     if (luckyArray.length === qty) return luckyArray;
+//     else return "failed";
+//   } catch (error) {
+//     console.log(error);
+//     throw new Error("An error occurred in generating lucky Number");
+//   }
+// };
 module.exports = {
   generateLucky,
   modifyLuckyByRewardQuantity,
@@ -458,4 +481,5 @@ module.exports = {
   updateLucky,
   checkCodeAvailability,
   generateRandomString,
+  getLuckyById,
 };
