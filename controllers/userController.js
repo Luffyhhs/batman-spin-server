@@ -7,6 +7,7 @@ const { generateToken } = require("../utils/jwtToken");
 const jwt = require("jsonwebtoken");
 const LimitModel = require("../models/LimitModel");
 const { createTransaction } = require("./transactionControllers");
+const { status } = require("express/lib/response");
 
 // signUp or create a user
 exports.signUp = expressAsyncHandler(async (req, res, next) => {
@@ -14,19 +15,34 @@ exports.signUp = expressAsyncHandler(async (req, res, next) => {
     const body = { ...req.body };
     console.log(body);
 
-    const newUser = await postCreateMethod(User, body);
-    if (newUser.role === "Agent") {
-      await LimitModel.create({
-        agent: newUser._id,
-      });
+    const exist = await checkExist(User, { name: body.name }, res);
+    console.log(exist);
+
+    if (exist !== null) {
+      Object.keys(exist).length > 0 &&
+        responseMethod(
+          {
+            status: "failed",
+            message: "User already Exist.",
+          },
+          res
+        );
+    } else {
+      const newUser = await postCreateMethod(User, body);
+
+      if (newUser.role === "Agent") {
+        await LimitModel.create({
+          agent: newUser._id,
+        });
+      }
+      responseMethod(
+        {
+          status: "succeed",
+          data: newUser,
+        },
+        res
+      );
     }
-    responseMethod(
-      {
-        status: "succeed",
-        data: newUser,
-      },
-      res
-    );
   } catch (error) {
     throw new Error(error);
   }
@@ -38,8 +54,11 @@ exports.getUsers = expressAsyncHandler(async (req, res, next) => {
     if (req.user.role === "Agent") {
       queryStr.upLine = req.user.id;
     }
-    const query = getMethod(User, queryStr, req);
-    // console.log(query);
+    console.log(queryStr);
+    let query = getMethod(User, queryStr, req);
+    // if (req.query.id) {
+    //   query = User.find({ id: req.query.id });
+    // }
     // const
     let users = [];
     let totalCount = 0;
@@ -49,9 +68,14 @@ exports.getUsers = expressAsyncHandler(async (req, res, next) => {
       // console.log(totalCount);
       users = await query;
     } else {
-      users = await query;
+      if (queryStr?.upLine && queryStr.id) {
+        users = await User.find({ upLine: queryStr.upLine, _id: queryStr.id });
+      } else {
+        users = await query;
+      }
       totalCount = users.length;
     }
+    console.log(users);
     responseMethod(
       {
         status: "succeed",
@@ -116,7 +140,7 @@ exports.logInDashboard = expressAsyncHandler(async (req, res, next) => {
       throw new Error("You Have Been Banned.");
     }
   } catch (error) {
-    // console.log(error, "line 74");
+    console.log(error.stack, "line 135");
     throw new Error(error);
   }
 });

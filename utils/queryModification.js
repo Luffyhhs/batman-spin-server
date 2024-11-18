@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Types;
 exports.queryModification = (Model, queryObj, req, searchFields = []) => {
   const excludeFields = ["page", "sort", "limit", "fields", "keyword"];
   excludeFields.forEach((el) => delete queryObj[el]);
@@ -26,7 +28,11 @@ exports.queryModification = (Model, queryObj, req, searchFields = []) => {
           newObj[key] = { ...newObj[key], [newKey]: newValue };
         }
       } else {
-        newObj[key] = value;
+        if (key === "id" || key === "upLine") {
+          newObj[key] = new ObjectId(value);
+        } else {
+          newObj[key] = value;
+        }
       }
     }
     return newObj;
@@ -61,7 +67,9 @@ exports.queryModification = (Model, queryObj, req, searchFields = []) => {
 
   let convertedObj = convertKeysAndValues(queryObj);
   let queryStr = JSON.stringify(convertedObj);
+  console.log(queryStr);
   let query = Model.find(JSON.parse(queryStr));
+
   // Add search logic if keyword is present in the query
   if (req.query.keyword) {
     const keyword = req.query.keyword;
