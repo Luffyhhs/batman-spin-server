@@ -263,6 +263,7 @@ const updateLucky = expressAsyncHandler(async (req, res, next) => {
         });
       }
       if (updatedLucky?.user !== undefined && updatedLucky.status === "out") {
+        if (await ReportModel.findOne({ lucky: updatedLucky._id })) return;
         const luckyUser = await User.findById(updatedLucky.user);
         const upLineLimit = await LimitModel.findOne({
           agent: luckyUser.upLine,
